@@ -1,20 +1,106 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Coffee, Star, MapPin, Phone, Mail } from 'lucide-react';
+import { ArrowRight, Coffee, Star, MapPin, Phone, Mail, Upload, X } from 'lucide-react';
 import { products, categories } from '@/data/products';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export const Home: React.FC = () => {
   const featuredProducts = products.filter(product => product.featured);
+  const [logo, setLogo] = useState<string | null>(null);
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setLogo(result);
+        // Store in localStorage for persistence across pages
+        localStorage.setItem('adeyLogo', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeLogo = () => {
+    setLogo(null);
+    localStorage.removeItem('adeyLogo');
+  };
+
+  // Load logo from localStorage on component mount
+  React.useEffect(() => {
+    const storedLogo = localStorage.getItem('adeyLogo');
+    if (storedLogo) {
+      setLogo(storedLogo);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section with Video Background */}
+      {/* Logo Upload Section */}
+      <div className="bg-white border-b p-4">
+        <div className="max-w-7xl mx-auto">
+          {!logo ? (
+            <div className="flex items-center justify-center">
+              <label htmlFor="logo-upload" className="cursor-pointer">
+                <div className="flex items-center space-x-2 p-4 border-2 border-dashed border-ethiopian-gold rounded-lg hover:bg-ethiopian-cream/20 transition-colors">
+                  <Upload className="w-5 h-5 text-ethiopian-brown" />
+                  <span className="text-ethiopian-brown font-medium">Upload Company Logo</span>
+                </div>
+                <Input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center">
+              <div className="relative">
+                <img
+                  src={logo}
+                  alt="Company Logo"
+                  className="h-20 w-auto object-contain"
+                />
+                <Button
+                  onClick={removeLogo}
+                  variant="ghost"
+                  size="sm"
+                  className="absolute -top-2 -right-2 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Hero Section with Improved Background */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Video Background Placeholder - Will be replaced with actual video */}
+        {/* Background Video/Image */}
+        <div className="absolute inset-0">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src="https://player.vimeo.com/external/370467553.sd.mp4?s=e90dcaba73c19b26b0d6ae0e6e6c4b6b6b8d7a3c&profile_id=164&oauth2_token_id=57447761" type="video/mp4" />
+            {/* Fallback image if video doesn't load */}
+          </video>
+          {/* Fallback background image */}
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1920&h=1080&fit=crop')] bg-cover bg-center"></div>
+        </div>
+        
+        {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-ethiopian-brown/80 via-ethiopian-brown/60 to-ethiopian-brown/80 z-10"></div>
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1920&h=1080&fit=crop')] bg-cover bg-center opacity-40"></div>
         
         {/* Hero Content */}
         <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
@@ -219,6 +305,7 @@ export const Home: React.FC = () => {
               <ul className="space-y-2">
                 <li><Link to="/terms" className="text-gray-300 hover:text-white transition-colors">Terms & Conditions</Link></li>
                 <li><Link to="/privacy" className="text-gray-300 hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/shipping" className="text-gray-300 hover:text-white transition-colors">Shipping & Return</Link></li>
               </ul>
               
               <h4 className="text-lg font-semibold mb-4 mt-8 text-ethiopian-gold">Connect with Us</h4>
