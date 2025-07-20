@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Star, Truck, Shield, Coffee } from 'lucide-react';
+import { ArrowRight, Coffee, Star, MapPin, Phone, Mail } from 'lucide-react';
 import { products, categories } from '@/data/products';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
@@ -11,16 +10,21 @@ export const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="hero-pattern bg-gradient-to-r from-ethiopian-cream to-white py-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-ethiopian-brown mb-6">
+      {/* Hero Section with Video Background */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Video Background Placeholder - Will be replaced with actual video */}
+        <div className="absolute inset-0 bg-gradient-to-r from-ethiopian-brown/80 via-ethiopian-brown/60 to-ethiopian-brown/80 z-10"></div>
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1920&h=1080&fit=crop')] bg-cover bg-center opacity-40"></div>
+        
+        {/* Hero Content */}
+        <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 drop-shadow-lg">
             Adey International Market
           </h1>
-          <p className="text-xl md:text-2xl text-ethiopian-green mb-8 max-w-3xl mx-auto">
+          <p className="text-2xl md:text-3xl mb-8 text-ethiopian-gold drop-shadow-md">
             "Bringing Ethiopian Heritage to Your Home"
           </p>
-          <p className="text-gray-700 mb-10 max-w-2xl mx-auto text-lg">
+          <p className="text-lg md:text-xl mb-12 max-w-2xl mx-auto text-gray-200 drop-shadow-sm">
             Discover authentic Ethiopian products, from aromatic coffee beans to traditional spices, 
             handwoven textiles, and artisanal household goods. Each item tells a story of Ethiopia's rich culture.
           </p>
@@ -28,17 +32,17 @@ export const Home: React.FC = () => {
             <Link to="/shop">
               <Button 
                 size="lg"
-                className="bg-ethiopian-gold hover:bg-ethiopian-gold/90 text-ethiopian-brown font-semibold px-8 py-3"
+                className="bg-ethiopian-gold hover:bg-ethiopian-gold/90 text-ethiopian-brown font-semibold px-8 py-4 text-lg"
               >
                 Shop Now
-                <ArrowRight className="ml-2 w-5 h-5" />
+                <ArrowRight className="ml-2 w-6 h-6" />
               </Button>
             </Link>
             <Link to="/about">
               <Button 
                 variant="outline"
                 size="lg"
-                className="border-ethiopian-brown text-ethiopian-brown hover:bg-ethiopian-brown/10 px-8 py-3"
+                className="border-2 border-white text-white hover:bg-white hover:text-ethiopian-brown px-8 py-4 text-lg"
               >
                 Our Story
               </Button>
@@ -47,37 +51,36 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Featured Products Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-ethiopian-gold/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-ethiopian-gold" />
-              </div>
-              <h3 className="text-xl font-semibold text-ethiopian-brown mb-2">Authentic Products</h3>
-              <p className="text-gray-600">
-                Sourced directly from Ethiopian artisans and farmers, ensuring authenticity and quality.
-              </p>
-            </div>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-ethiopian-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Truck className="w-8 h-8 text-ethiopian-green" />
-              </div>
-              <h3 className="text-xl font-semibold text-ethiopian-brown mb-2">Fast Shipping</h3>
-              <p className="text-gray-600">
-                Quick and secure delivery to bring Ethiopian heritage directly to your doorstep.
-              </p>
-            </div>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-ethiopian-red/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-8 h-8 text-ethiopian-red" />
-              </div>
-              <h3 className="text-xl font-semibold text-ethiopian-brown mb-2">Quality Guaranteed</h3>
-              <p className="text-gray-600">
-                Every product is carefully selected and tested to meet our high standards.
-              </p>
-            </div>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-ethiopian-brown mb-4">
+              Featured Products
+            </h2>
+            <p className="text-gray-700 max-w-2xl mx-auto">
+              Discover our handpicked selection of premium Ethiopian products, 
+              chosen for their exceptional quality and cultural significance.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link to="/shop">
+              <Button 
+                size="lg"
+                variant="outline"
+                className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-gold/10 px-8 py-3"
+              >
+                View All Products
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -114,40 +117,6 @@ export const Home: React.FC = () => {
                 <ArrowRight className="w-5 h-5 text-ethiopian-gold mt-4 group-hover:translate-x-2 transition-transform" />
               </Link>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-ethiopian-brown mb-4">
-              Featured Products
-            </h2>
-            <p className="text-gray-700 max-w-2xl mx-auto">
-              Discover our handpicked selection of premium Ethiopian products, 
-              chosen for their exceptional quality and cultural significance.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link to="/shop">
-              <Button 
-                size="lg"
-                variant="outline"
-                className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-gold/10 px-8 py-3"
-              >
-                View All Products
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -191,6 +160,85 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-ethiopian-brown text-white">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Company Info */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-10 h-10 bg-ethiopian-gold rounded-full flex items-center justify-center">
+                  <span className="text-ethiopian-brown font-bold">A</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Adey International Market</h3>
+                  <p className="text-sm text-gray-300">Ethiopian Heritage</p>
+                </div>
+              </div>
+              <p className="text-gray-300 mb-2">
+                Your trusted partner for authentic Ethiopian imports.
+              </p>
+              <p className="text-gray-300 mb-6">
+                Supplying quality you can trust, service you can count on.
+              </p>
+              
+              {/* Contact Info */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-4 h-4 text-ethiopian-gold" />
+                  <span className="text-sm text-gray-300">info@adeymarket.com</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Phone className="w-4 h-4 text-ethiopian-gold" />
+                  <span className="text-sm text-gray-300">(555) 123-4567</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <MapPin className="w-4 h-4 text-ethiopian-gold" />
+                  <span className="text-sm text-gray-300">Address coming soon</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-lg font-semibold mb-4 text-ethiopian-gold">Quick Links</h4>
+              <ul className="space-y-2">
+                <li><Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link></li>
+                <li><Link to="/account" className="text-gray-300 hover:text-white transition-colors">My Account</Link></li>
+                <li><Link to="/shop" className="text-gray-300 hover:text-white transition-colors">Shop</Link></li>
+                <li><Link to="/register" className="text-gray-300 hover:text-white transition-colors">New Customer Registration</Link></li>
+                <li><Link to="/about" className="text-gray-300 hover:text-white transition-colors">About Us</Link></li>
+                <li><Link to="/contact" className="text-gray-300 hover:text-white transition-colors">Contact Us</Link></li>
+              </ul>
+            </div>
+
+            {/* Information */}
+            <div>
+              <h4 className="text-lg font-semibold mb-4 text-ethiopian-gold">Information</h4>
+              <ul className="space-y-2">
+                <li><Link to="/terms" className="text-gray-300 hover:text-white transition-colors">Terms & Conditions</Link></li>
+                <li><Link to="/privacy" className="text-gray-300 hover:text-white transition-colors">Privacy Policy</Link></li>
+              </ul>
+              
+              <h4 className="text-lg font-semibold mb-4 mt-8 text-ethiopian-gold">Connect with Us</h4>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-4 h-4 text-ethiopian-gold" />
+                  <span className="text-sm text-gray-300">Newsletter coming soon</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Border */}
+          <div className="border-t border-gray-700 mt-8 pt-8 text-center">
+            <p className="text-gray-400 text-sm">
+              © 2024 Adey International Market. All rights reserved. | Bringing Ethiopian Heritage to Your Home
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

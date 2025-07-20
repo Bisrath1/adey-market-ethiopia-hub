@@ -1,14 +1,16 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from './AuthModal';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { user, logout } = useAuth();
   const location = useLocation();
 
@@ -17,9 +19,18 @@ export const Navbar: React.FC = () => {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Shop', path: '/shop' },
-    { name: 'About', path: '/about' },
-    { name: 'Contact', path: '/contact' },
+    { name: 'Contact Us', path: '/contact' },
+    { name: 'New Customer Registration', path: '/register' },
+    { name: 'About Us', path: '/about' },
   ];
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Navigate to shop with search query
+      window.location.href = `/shop?search=${encodeURIComponent(searchQuery.trim())}`;
+    }
+  };
 
   return (
     <>
@@ -37,13 +48,34 @@ export const Navbar: React.FC = () => {
               </div>
             </Link>
 
+            {/* Desktop Search Bar */}
+            <div className="hidden md:flex flex-1 max-w-md mx-8">
+              <form onSubmit={handleSearch} className="relative w-full">
+                <Input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pr-10 border-ethiopian-gold/30 focus:border-ethiopian-gold"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="ghost"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                >
+                  <Search className="w-4 h-4 text-ethiopian-brown" />
+                </Button>
+              </form>
+            </div>
+
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-6">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`text-sm font-medium transition-colors whitespace-nowrap ${
                     isActive(link.path)
                       ? 'text-ethiopian-red border-b-2 border-ethiopian-red'
                       : 'text-gray-700 hover:text-ethiopian-red'
@@ -97,6 +129,27 @@ export const Navbar: React.FC = () => {
                 {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
             </div>
+          </div>
+
+          {/* Mobile Search Bar */}
+          <div className="md:hidden pb-3">
+            <form onSubmit={handleSearch} className="relative">
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-10 border-ethiopian-gold/30 focus:border-ethiopian-gold"
+              />
+              <Button
+                type="submit"
+                size="sm"
+                variant="ghost"
+                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+              >
+                <Search className="w-4 h-4 text-ethiopian-brown" />
+              </Button>
+            </form>
           </div>
         </div>
 
