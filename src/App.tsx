@@ -6,14 +6,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Navbar } from "./components/Navbar";
-import { ProtectedRoute } from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Register from "./pages/Register";
-import Profile from "./pages/Profile";
 import Shipping from "./pages/Shipping";
 import NotFound from "./pages/NotFound";
 
@@ -30,21 +28,8 @@ const App = () => (
             <Navbar />
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/shop" element={
-                <ProtectedRoute>
-                  <Shop />
-                </ProtectedRoute>
-              } />
-              <Route path="/product/:id" element={
-                <ProtectedRoute>
-                  <ProductDetail />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/register" element={<Register />} />

@@ -1,14 +1,11 @@
 
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, Search, UserCircle } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { ShoppingCart, User, Menu, X, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from './AuthModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-import logo from '../components/assets/logo.jpg'; // adjust path as needed
-
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,7 +13,6 @@ export const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { user, logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -36,33 +32,21 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const handleProfileClick = () => {
-    if (user) {
-      navigate('/profile');
-    } else {
-      navigate('/register?message=' + encodeURIComponent('You need to register or sign in to access this section.'));
-    }
-  };
-
   return (
     <>
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3">
-                <img
-                  src={logo}
-                  alt="Adey Market Logo"
-                  className="w-10 h-10 rounded-full object-cover border border-ethiopian-gold"
-                />
-                <div>
-                  <h1 className="text-xl font-bold text-ethiopian-brown">Adey Market</h1>
-                  <p className="text-xs text-gray-600 -mt-1">Ethiopian Heritage</p>
-                </div>
-              </Link>
-
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-ethiopian-gold rounded-full flex items-center justify-center">
+                <span className="text-ethiopian-brown font-bold text-sm">A</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-ethiopian-brown">Adey Market</h1>
+                <p className="text-xs text-gray-600 -mt-1">Ethiopian Heritage</p>
+              </div>
+            </Link>
 
             {/* Desktop Search Bar */}
             <div className="hidden md:flex flex-1 max-w-md mx-8">
@@ -111,19 +95,9 @@ export const Navbar: React.FC = () => {
                 </span>
               </Button>
 
-              {/* Profile Icon */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleProfileClick}
-                className={`${user ? 'text-ethiopian-green' : 'text-gray-600'} hover:text-ethiopian-gold`}
-              >
-                <UserCircle className="w-5 h-5" />
-              </Button>
-
               {user ? (
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700">Hi, {user.user_metadata?.full_name || user.email?.split('@')[0]}</span>
+                  <span className="text-sm text-gray-700">Hi, {user.name}</span>
                   <Button
                     onClick={logout}
                     variant="outline"
@@ -201,19 +175,7 @@ export const Navbar: React.FC = () => {
               <div className="pt-3 border-t">
                 {user ? (
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-700">Hi, {user.user_metadata?.full_name || user.email?.split('@')[0]}</p>
-                    <Button
-                      onClick={() => {
-                        handleProfileClick();
-                        setIsMenuOpen(false);
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-ethiopian-gold text-ethiopian-brown mb-2"
-                    >
-                      <UserCircle className="w-4 h-4 mr-2" />
-                      Profile
-                    </Button>
+                    <p className="text-sm text-gray-700">Hi, {user.name}</p>
                     <Button
                       onClick={() => {
                         logout();
@@ -227,31 +189,17 @@ export const Navbar: React.FC = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <Button
-                      onClick={() => {
-                        handleProfileClick();
-                        setIsMenuOpen(false);
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-ethiopian-gold text-ethiopian-brown mb-2"
-                    >
-                      <UserCircle className="w-4 h-4 mr-2" />
-                      Profile
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setIsAuthModalOpen(true);
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full bg-ethiopian-gold hover:bg-ethiopian-gold/90 text-ethiopian-brown"
-                      size="sm"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Sign In
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => {
+                      setIsAuthModalOpen(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full bg-ethiopian-gold hover:bg-ethiopian-gold/90 text-ethiopian-brown"
+                    size="sm"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
                 )}
               </div>
             </div>
