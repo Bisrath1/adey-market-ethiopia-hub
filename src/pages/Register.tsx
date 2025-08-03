@@ -50,35 +50,16 @@ export const Register: React.FC = () => {
   const redirectMessage = searchParams.get('message');
   const redirectUrl = searchParams.get('redirect') || '/shop';
 
-  // Redirect if already has customer profile or not authenticated
+  // Check if authenticated and prefill form
   useEffect(() => {
-    const checkAuthAndProfile = async () => {
-      if (!user) {
-        navigate('/login?redirect=/register&message=Please sign in to register your business');
-        return;
-      }
-
-      // Check if user already has a customer profile
-      const { data } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (data) {
-        navigate('/profile');
-      } else {
-        // Prefill user data if available
-        setFormData(prev => ({
-          ...prev,
-          email: user.email || '',
-          fullName: profile?.full_name || ''
-        }));
-      }
-    };
-
-    checkAuthAndProfile();
-  }, [user, profile, navigate]);
+    if (user && profile) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || '',
+        fullName: profile?.full_name || ''
+      }));
+    }
+  }, [user, profile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -239,7 +220,7 @@ const handleBusinessSubmit = async (e: React.FormEvent) => {
       description: "We'll review your application and contact you within 1-2 business days.",
     });
 
-    navigate('/profile');
+    navigate('/shop');
   } catch (error) {
     console.error('Business registration error:', error);
     toast({
@@ -252,9 +233,6 @@ const handleBusinessSubmit = async (e: React.FormEvent) => {
   }
 };
 
-  if (!user) {
-    return null; // Or a loading spinner while redirect happens
-  }
 
   return (
     <div className="min-h-screen bg-ethiopian-cream/30 py-12">

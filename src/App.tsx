@@ -13,7 +13,7 @@ import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Register from "./pages/Register";
-import Profile from "./pages/Profile";
+
 import Shipping from "./pages/Shipping";
 import NotFound from "./pages/NotFound";
 
@@ -39,11 +39,6 @@ const App = () => (
               <Route path="/product/:id" element={
                 <ProtectedRoute>
                   <ProductDetail />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
                 </ProtectedRoute>
               } />
               <Route path="/about" element={<About />} />
