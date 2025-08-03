@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Eye, Heart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { AuthModal } from '@/components/AuthModal';
 import { Button } from '@/components/ui/button';
 
 interface Product {
@@ -23,6 +24,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { user } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
     <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-ethiopian-gold/30 transform hover:-translate-y-2 hover:scale-[1.02]">
@@ -89,9 +91,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               ${product.price.toFixed(2)}
             </div>
           ) : (
-            <div className="text-sm text-gray-500 italic">
-              Login to see price
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-gold/10"
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              Sign in to view price
+            </Button>
           )}
 
           <Link to={`/product/${product.id}`}>
@@ -108,6 +115,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       {/* Bottom accent line */}
       <div className="h-1 bg-gradient-to-r from-ethiopian-gold via-ethiopian-green to-ethiopian-red transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+      
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 };

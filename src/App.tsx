@@ -31,16 +31,8 @@ const App = () => (
             <Navbar />
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/shop" element={
-                <ProtectedRoute>
-                  <Shop />
-                </ProtectedRoute>
-              } />
-              <Route path="/product/:id" element={
-                <ProtectedRoute>
-                  <ProductDetail />
-                </ProtectedRoute>
-              } />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/register" element={<Register />} />

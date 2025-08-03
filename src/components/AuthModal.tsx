@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMo
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const { login, register, isLoading } = useAuth();
+  const navigate = useNavigate();
 
   if (!isOpen) return null;
 
@@ -129,13 +131,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMo
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
-            <button
-              onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-              className="ml-1 text-ethiopian-red hover:underline font-medium"
-            >
-              {mode === 'login' ? 'Sign up' : 'Sign in'}
-            </button>
+            {mode === 'login' ? (
+              <>
+                New customer?{' '}
+                <button
+                  onClick={() => {
+                    onClose();
+                    navigate('/register');
+                  }}
+                  className="text-ethiopian-red hover:underline font-medium"
+                >
+                  Register here
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button
+                  onClick={() => setMode('login')}
+                  className="text-ethiopian-red hover:underline font-medium"
+                >
+                  Sign in
+                </button>
+              </>
+            )}
           </p>
         </div>
       </div>
