@@ -85,7 +85,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </p>
 
         {/* Price and Action */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 mb-3">
           {user ? (
             <div className="text-2xl font-bold text-ethiopian-brown">
               ${product.price.toFixed(2)}
@@ -101,7 +101,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </Button>
           )}
 
-          <Link to={`/product/${product.id}`}>
+          <Link to={`/product/${product.id}`} className="ml-auto">
             <Button
               variant="outline"
               size="sm"

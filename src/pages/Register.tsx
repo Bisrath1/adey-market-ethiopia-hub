@@ -32,6 +32,7 @@ export const Register: React.FC = () => {
     companyName: '',
     fullName: profile?.full_name || '',
     email: user?.email || '',
+    password: '',
     businessPhone: '',
     mobilePhone: '',
     street: '',
@@ -114,6 +115,8 @@ export const Register: React.FC = () => {
     if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Please enter a valid email';
+    if (!formData.password.trim()) newErrors.password = 'Password is required';
+    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     if (!formData.businessPhone.trim()) newErrors.businessPhone = 'Business phone is required';
     if (!formData.street.trim()) newErrors.street = 'Street address is required';
     if (!formData.city.trim()) newErrors.city = 'City is required';
@@ -134,25 +137,40 @@ const handleBusinessSubmit = async (e: React.FormEvent) => {
     return;
   }
 
-  if (!user) {
-    toast({
-      title: "Authentication Required",
-      description: "Please sign in to submit your business registration.",
-      variant: "destructive",
-    });
-    navigate('/login');
-    return;
-  }
-
   setIsSubmitting(true);
 
   try {
+    // Create user account first if not already authenticated
+    let currentUser = user;
+    
+    if (!currentUser) {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: formData.fullName
+          }
+        }
+      });
+
+      if (authError) {
+        throw new Error(authError.message || 'Failed to create user account');
+      }
+
+      currentUser = authData.user;
+      
+      if (!currentUser) {
+        throw new Error('Failed to create user account');
+      }
+    }
     let documentUrl = null;
     
     // Only attempt upload if document exists
     if (formData.document) {
       const fileExt = formData.document.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
       
       // First check file size (limit to 10MB)
       if (formData.document.size > 10 * 1024 * 1024) {
@@ -195,7 +213,7 @@ const handleBusinessSubmit = async (e: React.FormEvent) => {
     const { error: customerError } = await supabase
       .from('customers')
       .insert({
-        user_id: user.id,
+        user_id: currentUser.id,
         company_name: formData.companyName,
         full_name: formData.fullName,
         email: formData.email,
@@ -315,6 +333,24 @@ const handleBusinessSubmit = async (e: React.FormEvent) => {
                 />
                 {errors.email && (
                   <p className="text-red-500 text-sm">{errors.email}</p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className={`border-ethiopian-gold/30 focus:border-ethiopian-gold ${
+                    errors.password ? 'border-red-500' : ''
+                  }`}
+                />
+                {errors.password && (
+                  <p className="text-red-500 text-sm">{errors.password}</p>
                 )}
               </div>
 
