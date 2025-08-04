@@ -85,7 +85,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </p>
 
         {/* Price and Action */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           {user ? (
             <div className="text-2xl font-bold text-ethiopian-brown">
               ${product.price.toFixed(2)}
@@ -94,7 +94,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <Button
               variant="outline"
               size="sm"
-              className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-gold/10"
+              className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-brown hover:text-white transition-all duration-300"
               onClick={() => setIsAuthModalOpen(true)}
             >
               Sign in to view price
@@ -105,7 +105,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <Button
               variant="outline"
               size="sm"
-              className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-gold/10 transition-all duration-300 group-hover:scale-105"
+              className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-brown hover:text-white transition-all duration-300 group-hover:scale-105"
             >
               View Product
             </Button>

@@ -120,7 +120,6 @@ export const Register: React.FC = () => {
     if (!formData.state) newErrors.state = 'State is required';
     if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
     if (!formData.taxId.trim()) newErrors.taxId = 'Tax ID is required';
-    if (!formData.document) newErrors.document = 'Business document upload is required';
 
     return newErrors;
   };
@@ -451,7 +450,7 @@ const handleBusinessSubmit = async (e: React.FormEvent) => {
 
               {/* Document Upload */}
               <div className="space-y-2">
-                <Label htmlFor="document">EIN or Business Tax Registration Document Upload *</Label>
+                <Label htmlFor="document">EIN or Business Tax Registration Document Upload (Optional)</Label>
                 <div className="border-2 border-dashed border-ethiopian-gold/30 rounded-lg p-6">
                   <div className="text-center">
                     <Upload className="mx-auto h-12 w-12 text-gray-400" />
