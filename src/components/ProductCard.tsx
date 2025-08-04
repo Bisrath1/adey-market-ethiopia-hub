@@ -1,22 +1,15 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Eye, Heart } from 'lucide-react';
+import { MapPin, Eye, Heart, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCustomerApproval } from '@/hooks/useCustomerApproval';
+import { useCartStore } from '@/stores/cartStore';
+import { toast } from '@/hooks/use-toast';
 import { AuthModal } from '@/components/AuthModal';
 import { Button } from '@/components/ui/button';
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  origin: string;
-  description: string;
-  featured?: boolean;
-  culturalNotes?: string;
-}
+import { Product } from '@/data/products';
 
 interface ProductCardProps {
   product: Product;
@@ -24,7 +17,22 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { user } = useAuth();
+  const { isApproved } = useCustomerApproval();
+  const { addItem } = useCartStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const handleAddToCart = () => {
+    if (!user || !isApproved) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    
+    addItem(product, 1);
+    toast({
+      title: "Added to Cart",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
 
   return (
     <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-ethiopian-gold/30 transform hover:-translate-y-2 hover:scale-[1.02]">
@@ -86,7 +94,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Price and Action */}
         <div className="flex items-center justify-between gap-3 mb-3">
-          {user ? (
+          {user && isApproved ? (
             <div className="text-2xl font-bold text-ethiopian-brown">
               ${product.price.toFixed(2)}
             </div>
@@ -97,19 +105,32 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-brown hover:text-white transition-all duration-300"
               onClick={() => setIsAuthModalOpen(true)}
             >
-              Sign in to view price
+              {!user ? 'Sign In for Price' : 'Approval Required'}
             </Button>
           )}
 
-          <Link to={`/product/${product.id}`} className="ml-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-brown hover:text-white transition-all duration-300 group-hover:scale-105"
-            >
-              View Product
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            {user && isApproved && (
+              <Button
+                size="sm"
+                onClick={handleAddToCart}
+                className="bg-ethiopian-brown hover:bg-ethiopian-brown/90"
+              >
+                <ShoppingCart className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            )}
+            <Link to={`/product/${product.id}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-brown hover:text-white transition-all duration-300"
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                View
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

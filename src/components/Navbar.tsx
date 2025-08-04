@@ -1,33 +1,25 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, Search } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { AuthModal } from './AuthModal';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useCartStore } from '@/stores/cartStore';
+import { Menu, User, LogOut, ShoppingCart, Shield, Search, X } from 'lucide-react';
+import { AuthModal } from './AuthModal';
+import logo from './assets/logo.jpg';
 
-import logo from '../components/assets/logo.jpg'; // adjust path as needed
-
-export const Navbar: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+export const Navbar = () => {
+  const { user, logout } = useAuth();
+  const { isAdmin } = useUserRole();
+  const { totalItems } = useCartStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Correctly get user, profile, logout inside the component
-  const { user, profile, logout } = useAuth();
-
   const location = useLocation();
-  const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path;
-
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Shop', path: '/shop' },
-    { name: 'Contact Us', path: '/contact' },
-    { name: 'New Customer Registration', path: '/register' },
-    { name: 'About Us', path: '/about' },
-  ];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +28,13 @@ export const Navbar: React.FC = () => {
     }
   };
 
+  const navLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'Shop', path: '/shop' },
+    { name: 'About', path: '/about' },
+    { name: 'Contact', path: '/contact' },
+    { name: 'Register', path: '/register' },
+  ];
 
   return (
     <>
@@ -55,7 +54,7 @@ export const Navbar: React.FC = () => {
               </div>
             </Link>
 
-            {/* Desktop Search Bar */}
+            {/* Desktop Search */}
             <div className="hidden md:flex flex-1 max-w-md mx-8">
               <form onSubmit={handleSearch} className="relative w-full">
                 <Input
@@ -65,12 +64,7 @@ export const Navbar: React.FC = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pr-10 border-ethiopian-gold/30 focus:border-ethiopian-gold"
                 />
-                <Button
-                  type="submit"
-                  size="sm"
-                  variant="ghost"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                >
+                <Button type="submit" size="sm" variant="ghost" className="absolute right-0 top-0 h-full px-3">
                   <Search className="w-4 h-4 text-ethiopian-brown" />
                 </Button>
               </form>
@@ -83,46 +77,53 @@ export const Navbar: React.FC = () => {
                   key={link.path}
                   to={link.path}
                   className={`text-sm font-medium transition-colors whitespace-nowrap ${
-                    isActive(link.path)
-                      ? 'text-ethiopian-red border-b-2 border-ethiopian-red'
-                      : 'text-gray-700 hover:text-ethiopian-red'
+                    isActive(link.path) ? 'text-ethiopian-gold' : 'text-gray-700 hover:text-ethiopian-gold'
                   }`}
                 >
                   {link.name}
                 </Link>
               ))}
+              {user && (
+                <Link to="/customer-dashboard" className={`text-sm font-medium transition-colors ${
+                  isActive('/customer-dashboard') ? 'text-ethiopian-gold' : 'text-gray-700 hover:text-ethiopian-gold'
+                }`}>
+                  Dashboard
+                </Link>
+              )}
+              {isAdmin && (
+                <Link to="/admin-dashboard" className={`text-sm font-medium transition-colors flex items-center gap-1 ${
+                  isActive('/admin-dashboard') ? 'text-ethiopian-gold' : 'text-gray-700 hover:text-ethiopian-gold'
+                }`}>
+                  <Shield className="w-4 h-4" />
+                  Admin
+                </Link>
+              )}
             </div>
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="relative">
-                <ShoppingCart className="w-5 h-5" />
-                <span className="absolute -top-2 -right-2 bg-ethiopian-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  0
-                </span>
-              </Button>
-
-
+              {user && (
+                <Link to="/cart" className="relative">
+                  <Button variant="ghost" size="sm">
+                    <ShoppingCart className="w-5 h-5" />
+                    {totalItems > 0 && (
+                      <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0">
+                        {totalItems}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              )}
               {user ? (
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700">
-                    Hi, {profile?.full_name || user.email?.split('@')[0]}
-                  </span>
-                  <Button
-                    onClick={logout}
-                    variant="outline"
-                    size="sm"
-                    className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-gold/10"
-                  >
+                  <span className="text-sm text-gray-700">Hi, {user.email?.split('@')[0]}</span>
+                  <Button onClick={logout} variant="outline" size="sm">
+                    <LogOut className="w-4 h-4 mr-1" />
                     Logout
                   </Button>
                 </div>
               ) : (
-                <Button
-                  onClick={() => setIsAuthModalOpen(true)}
-                  className="bg-ethiopian-gold hover:bg-ethiopian-gold/90 text-ethiopian-brown"
-                  size="sm"
-                >
+                <Button onClick={() => setIsAuthModalOpen(true)} size="sm" className="bg-ethiopian-gold hover:bg-ethiopian-gold/90">
                   <User className="w-4 h-4 mr-2" />
                   Sign In
                 </Button>
@@ -137,7 +138,7 @@ export const Navbar: React.FC = () => {
             </div>
           </div>
 
-          {/* Mobile Search Bar */}
+          {/* Mobile Search */}
           <div className="md:hidden pb-3">
             <form onSubmit={handleSearch} className="relative">
               <Input
@@ -145,15 +146,10 @@ export const Navbar: React.FC = () => {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10 border-ethiopian-gold/30 focus:border-ethiopian-gold"
+                className="pr-10"
               />
-              <Button
-                type="submit"
-                size="sm"
-                variant="ghost"
-                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-              >
-                <Search className="w-4 h-4 text-ethiopian-brown" />
+              <Button type="submit" size="sm" variant="ghost" className="absolute right-0 top-0 h-full px-3">
+                <Search className="w-4 h-4" />
               </Button>
             </form>
           </div>
@@ -167,52 +163,46 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`block text-sm font-medium transition-colors ${
-                    isActive(link.path) ? 'text-ethiopian-red' : 'text-gray-700 hover:text-ethiopian-red'
-                  }`}
+                  className={`block text-sm font-medium ${isActive(link.path) ? 'text-ethiopian-gold' : 'text-gray-700'}`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.name}
                 </Link>
               ))}
-
+              {user && (
+                <>
+                  <Link to="/customer-dashboard" className="block text-sm font-medium text-gray-700" onClick={() => setIsMenuOpen(false)}>
+                    Dashboard
+                  </Link>
+                  <Link to="/cart" className="block text-sm font-medium text-gray-700 flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                    <ShoppingCart className="w-4 h-4" />
+                    Cart {totalItems > 0 && `(${totalItems})`}
+                  </Link>
+                </>
+              )}
+              {isAdmin && (
+                <Link to="/admin-dashboard" className="block text-sm font-medium text-gray-700 flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                  <Shield className="w-4 h-4" />
+                  Admin Dashboard
+                </Link>
+              )}
               <div className="pt-3 border-t">
                 {user ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-700">Hi, {profile?.full_name || user.email?.split('@')[0]}</p>
-                    <Button
-                      onClick={() => {
-                        logout();
-                        setIsMenuOpen(false);
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-ethiopian-gold text-ethiopian-brown"
-                    >
-                      Logout
-                    </Button>
-                  </div>
+                  <Button onClick={() => { logout(); setIsMenuOpen(false); }} variant="outline" size="sm" className="w-full">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
                 ) : (
-                  <div className="space-y-2">
-                    <Button
-                      onClick={() => {
-                        setIsAuthModalOpen(true);
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full bg-ethiopian-gold hover:bg-ethiopian-gold/90 text-ethiopian-brown"
-                      size="sm"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Sign In
-                    </Button>
-                  </div>
+                  <Button onClick={() => { setIsAuthModalOpen(true); setIsMenuOpen(false); }} size="sm" className="w-full">
+                    <User className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
                 )}
               </div>
             </div>
           </div>
         )}
       </nav>
-
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </>
   );
