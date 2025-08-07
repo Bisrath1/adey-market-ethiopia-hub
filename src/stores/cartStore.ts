@@ -22,98 +22,84 @@ interface CartStore {
 
 export const useCartStore = create<CartStore>()(
   persist(
-    (set, get) => ({
-      items: [],
-      totalItems: 0,
-      totalAmount: 0,
+    (set, get) => {
+      // Utility function to calculate totals, to avoid repeating code
+      const calculateTotals = (items: CartItem[]) => ({
+        totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
+        totalAmount: items.reduce((sum, item) => sum + item.subtotal, 0),
+      });
 
-      addItem: (product: Product, quantity = 1) => {
-        const items = get().items;
-        const existingItem = items.find(item => item.id === product.id);
+      return {
+        items: [],
+        totalItems: 0,
+        totalAmount: 0,
 
-        if (existingItem) {
-          // Update existing item
-          const updatedItems = items.map(item =>
-            item.id === product.id
+        addItem: (product: Product, quantity = 1) => {
+          const items = get().items;
+          const existingItem = items.find(item => item.id === product.id);
+
+          let updatedItems: CartItem[];
+          if (existingItem) {
+            updatedItems = items.map(item =>
+              item.id === product.id
+                ? {
+                    ...item,
+                    quantity: item.quantity + quantity,
+                    subtotal: (item.quantity + quantity) * product.price,
+                  }
+                : item
+            );
+          } else {
+            const newItem: CartItem = {
+              id: product.id,
+              product,
+              quantity,
+              subtotal: quantity * product.price,
+            };
+            updatedItems = [...items, newItem];
+          }
+
+          const totals = calculateTotals(updatedItems);
+          set({ items: updatedItems, ...totals });
+        },
+
+        removeItem: (productId: string) => {
+          const items = get().items.filter(item => item.id !== productId);
+          const totals = calculateTotals(items);
+          set({ items, ...totals });
+        },
+
+        updateQuantity: (productId: string, quantity: number) => {
+          if (quantity <= 0) {
+            get().removeItem(productId);
+            return;
+          }
+          const updatedItems = get().items.map(item =>
+            item.id === productId
               ? {
                   ...item,
-                  quantity: item.quantity + quantity,
-                  subtotal: (item.quantity + quantity) * product.price
+                  quantity,
+                  subtotal: quantity * item.product.price,
                 }
               : item
           );
-          
+          const totals = calculateTotals(updatedItems);
+          set({ items: updatedItems, ...totals });
+        },
+
+        clearCart: () => {
           set({
-            items: updatedItems,
-            totalItems: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
-            totalAmount: updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
+            items: [],
+            totalItems: 0,
+            totalAmount: 0,
           });
-        } else {
-          // Add new item
-          const newItem: CartItem = {
-            id: product.id,
-            product,
-            quantity,
-            subtotal: quantity * product.price
-          };
+        },
 
-          const updatedItems = [...items, newItem];
-          
-          set({
-            items: updatedItems,
-            totalItems: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
-            totalAmount: updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
-          });
-        }
-      },
-
-      removeItem: (productId: string) => {
-        const items = get().items;
-        const updatedItems = items.filter(item => item.id !== productId);
-        
-        set({
-          items: updatedItems,
-          totalItems: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
-          totalAmount: updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
-        });
-      },
-
-      updateQuantity: (productId: string, quantity: number) => {
-        if (quantity <= 0) {
-          get().removeItem(productId);
-          return;
-        }
-
-        const items = get().items;
-        const updatedItems = items.map(item =>
-          item.id === productId
-            ? {
-                ...item,
-                quantity,
-                subtotal: quantity * item.product.price
-              }
-            : item
-        );
-        
-        set({
-          items: updatedItems,
-          totalItems: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
-          totalAmount: updatedItems.reduce((sum, item) => sum + item.subtotal, 0)
-        });
-      },
-
-      clearCart: () => {
-        set({
-          items: [],
-          totalItems: 0,
-          totalAmount: 0
-        });
-      },
-
-      getItem: (productId: string) => {
-        return get().items.find(item => item.id === productId);
-      }
-    }),
+        getItem: (productId: string) => {
+          return get().items.find(item => item.id === productId);
+        },
+      };
+    },
     {
       name: 'cart-storage',
     }

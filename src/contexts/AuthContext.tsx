@@ -215,6 +215,7 @@ const logout = async () => {
       title: 'Logged out',
       description: 'You have been successfully logged out.',
     });
+    navigate('/')
     console.log('Logout successful, navigating to /login');
     
   } catch (error) {

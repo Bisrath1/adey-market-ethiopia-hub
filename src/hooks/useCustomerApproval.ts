@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole'; // Make sure this path is correct
 
 export const useCustomerApproval = () => {
   const { user } = useAuth();
+  const { isAdmin, isLoading: isRoleLoading } = useUserRole(); // ⬅️ get admin flag
   const [isApproved, setIsApproved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
@@ -17,12 +19,20 @@ export const useCustomerApproval = () => {
         return;
       }
 
+      if (isAdmin) {
+        // ⬅️ Bypass check for admin
+        setIsApproved(true);
+        setApprovalStatus('approved');
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('customers')
           .select('approval_status')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching approval status:', error);
@@ -42,8 +52,11 @@ export const useCustomerApproval = () => {
       }
     };
 
-    fetchApprovalStatus();
-  }, [user]);
+    // Wait until user role is loaded
+    if (!isRoleLoading) {
+      fetchApprovalStatus();
+    }
+  }, [user, isAdmin, isRoleLoading]);
 
   return { isApproved, isLoading, approvalStatus };
 };
