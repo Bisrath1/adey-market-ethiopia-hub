@@ -83,13 +83,13 @@ export const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
-              {user && (
+              {/* {user && (
                 <Link to="/customer-dashboard" className={`text-sm font-medium transition-colors ${
                   isActive('/customer-dashboard') ? 'text-ethiopian-gold' : 'text-gray-700 hover:text-ethiopian-gold'
                 }`}>
                   Dashboard
                 </Link>
-              )}
+              )} */}
               {isAdmin && (
                 <Link to="/admin-dashboard" className={`text-sm font-medium transition-colors flex items-center gap-1 ${
                   isActive('/admin-dashboard') ? 'text-ethiopian-gold' : 'text-gray-700 hover:text-ethiopian-gold'
