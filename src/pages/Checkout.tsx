@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -9,15 +14,28 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCustomerApproval } from '@/hooks/useCustomerApproval';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, ShoppingCart, CreditCard, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Loader2, CreditCard } from 'lucide-react';
 
-const Checkout = () => {
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  useStripe,
+  useElements,
+  CardElement,
+} from '@stripe/react-stripe-js';
+
+const stripePromise = loadStripe('pk_test_51RtxcMP67VNUzsxfKLLFneQXAU5URDZV9oZBtW1T4zZkWesX0IACyvfUfjsFUQpqHgOKzSMnIDnD3H2AcV9XxywR00GxujOSex'); // Your Stripe publishable key here
+
+function CheckoutForm() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
   const { items, totalItems, totalAmount, clearCart } = useCartStore();
   const [isProcessing, setIsProcessing] = useState(false);
- const { isApproved, isLoading: approvalLoading } = useCustomerApproval();
+  const { isApproved, isLoading: approvalLoading } = useCustomerApproval();
+
+  const stripe = useStripe();
+  const elements = useElements();
+
   if (approvalLoading) {
     return (
       <div className="min-h-screen bg-ethiopian-cream/30 flex items-center justify-center">
@@ -26,7 +44,6 @@ const Checkout = () => {
     );
   }
 
-  // Show access required message if user is not logged in or not approved
   if (!user || !isApproved) {
     return (
       <div className="min-h-screen bg-ethiopian-cream/30">
@@ -76,30 +93,64 @@ const Checkout = () => {
   const finalTotal = totalAmount + estimatedTax;
 
   const handlePayment = async () => {
+    if (!stripe || !elements) {
+      toast({
+        title: "Stripe not loaded",
+        description: "Stripe.js has not loaded yet. Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
-    
+
     try {
-      // Create order in database
+      
+      const res = await fetch('http://localhost:4242/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: Math.round(finalTotal * 100) }), // amount in cents
+      });
+
+      const { clientSecret, error: backendError } = await res.json();
+
+      if (backendError) throw new Error(backendError);
+      if (!clientSecret) throw new Error("Failed to get clientSecret");
+
+      
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) throw new Error("Card Element not found");
+
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+        },
+      });
+
+      if (stripeError) throw stripeError;
+      if (paymentIntent?.status !== "succeeded") throw new Error("Payment not successful");
+
+      // 3. Save order in Supabase
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user.id,
           total_amount: finalTotal,
-          status: 'pending',
-          payment_status: 'pending'
+          status: 'completed',
+          payment_status: 'paid',
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // Create order items
+      // 4. Save order items
       const orderItems = items.map(item => ({
         order_id: orderData.id,
         product_id: parseInt(item.product.id),
         quantity: item.quantity,
         unit_price: item.product.price,
-        total_price: item.subtotal
+        total_price: item.subtotal,
       }));
 
       const { error: itemsError } = await supabase
@@ -108,34 +159,15 @@ const Checkout = () => {
 
       if (itemsError) throw itemsError;
 
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Update order status
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          status: 'completed',
-          payment_status: 'paid'
-        })
-        .eq('id', orderData.id);
-
-      if (updateError) throw updateError;
-
-      // Clear cart and redirect
+      // 5. Clear cart and navigate
       clearCart();
-      navigate('/payment-success', { 
-        state: { 
-          orderId: orderData.id,
-          total: finalTotal
-        } 
-      });
-      
+      navigate('/payment-success', { state: { orderId: orderData.id, total: finalTotal } });
+
     } catch (error) {
       console.error('Payment error:', error);
       toast({
         title: "Payment Failed",
-        description: "There was an error processing your payment. Please try again.",
+        description: error.message || "There was an error processing your payment. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -168,7 +200,7 @@ const Checkout = () => {
                 <CardTitle>Order Review</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {items.map((item) => (
+                {items.map(item => (
                   <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
                     <img
                       src={item.product.image}
@@ -222,7 +254,22 @@ const Checkout = () => {
                     <span className="text-ethiopian-brown">${finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
-                
+
+                <div className="pt-4">
+                  <CardElement
+                    options={{
+                      style: {
+                        base: {
+                          fontSize: '16px',
+                          color: '#424770',
+                          '::placeholder': { color: '#aab7c4' },
+                        },
+                        invalid: { color: '#9e2146' },
+                      },
+                    }}
+                  />
+                </div>
+
                 <div className="space-y-4 pt-4">
                   <Button
                     onClick={handlePayment}
@@ -241,7 +288,7 @@ const Checkout = () => {
                       </>
                     )}
                   </Button>
-                  
+
                   <p className="text-xs text-gray-500 text-center">
                     By completing your purchase, you agree to our Terms of Service and Privacy Policy.
                     Your payment information is secured with 256-bit SSL encryption.
@@ -270,6 +317,12 @@ const Checkout = () => {
       </div>
     </div>
   );
-};
+}
 
-export default Checkout;
+export default function CheckoutWrapper() {
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutForm />
+    </Elements>
+  );
+}
