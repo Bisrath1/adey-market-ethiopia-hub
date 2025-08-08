@@ -34,7 +34,9 @@ const PaymentSuccess = () => {
                 {orderId && (
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-sm text-gray-600">Order ID</p>
-                    <p className="font-mono text-sm font-semibold">{orderId.slice(0, 8).toUpperCase()}</p>
+                    <p className="font-mono text-sm font-semibold">
+                      {String(orderId).slice(0, 8).toUpperCase()}
+                    </p>
                     {total && (
                       <>
                         <p className="text-sm text-gray-600 mt-2">Total Amount</p>

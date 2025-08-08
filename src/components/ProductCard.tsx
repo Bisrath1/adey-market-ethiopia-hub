@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Eye, Heart, ShoppingCart } from 'lucide-react';
@@ -17,13 +16,22 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { user } = useAuth();
-  const { isApproved } = useCustomerApproval();
+  const { isApproved, approvalStatus } = useCustomerApproval();
   const { addItem } = useCartStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const handleAddToCart = () => {
-    if (!user || !isApproved) {
+    if (!user) {
       setIsAuthModalOpen(true);
+      return;
+    }
+
+    if (approvalStatus !== 'approved') {
+      toast({
+        title: "Action not allowed",
+        description: "Your account is not approved to add products to the cart.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -94,7 +102,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Price and Action */}
         <div className="flex items-center justify-between gap-3 mb-3">
-          {user && isApproved ? (
+          {user && approvalStatus === 'approved' ? (
             <div className="text-2xl font-bold text-ethiopian-brown">
               ${product.price.toFixed(2)}
             </div>
@@ -105,12 +113,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-brown hover:text-white transition-all duration-300"
               onClick={() => setIsAuthModalOpen(true)}
             >
-              {!user ? 'Sign In for Price' : 'Approval Required'}
+              {!user
+                ? 'Sign In for Price'
+                : approvalStatus
+                ? approvalStatus.charAt(0).toUpperCase() + approvalStatus.slice(1)
+                : 'Approval Required'}
             </Button>
           )}
 
           <div className="flex gap-2">
-            {user && isApproved && (
+            {user && approvalStatus === 'approved' && (
               <Button
                 size="sm"
                 onClick={handleAddToCart}
@@ -136,11 +148,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       {/* Bottom accent line */}
       <div className="h-1 bg-gradient-to-r from-ethiopian-gold via-ethiopian-green to-ethiopian-red transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-      
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-      />
+
+      {/* Only render AuthModal if user is NOT signed in */}
+      {!user && (
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

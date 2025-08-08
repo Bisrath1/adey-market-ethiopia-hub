@@ -9,9 +9,19 @@ import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from 'lucide-react';
 
 const Cart = () => {
   const { user } = useAuth();
-  const { isApproved } = useCustomerApproval();
+  const { isApproved, isLoading: approvalLoading } = useCustomerApproval();
   const { items, totalItems, totalAmount, updateQuantity, removeItem, clearCart } = useCartStore();
 
+  // Show loading spinner while approval status is loading
+  if (approvalLoading) {
+    return (
+      <div className="min-h-screen bg-ethiopian-cream/30 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-ethiopian-gold border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Show access required message if user is not logged in or not approved
   if (!user || !isApproved) {
     return (
       <div className="min-h-screen bg-ethiopian-cream/30">
@@ -33,6 +43,7 @@ const Cart = () => {
     );
   }
 
+  // Show empty cart message if no items
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-ethiopian-cream/30">
@@ -57,6 +68,7 @@ const Cart = () => {
     );
   }
 
+  // Show full cart with items and order summary
   return (
     <div className="min-h-screen bg-ethiopian-cream/30">
       <div className="container mx-auto px-4 py-8">
@@ -97,7 +109,7 @@ const Cart = () => {
                       <Badge variant="secondary" className="mb-3">
                         {item.product.category}
                       </Badge>
-                      
+
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Button
@@ -105,6 +117,7 @@ const Cart = () => {
                             size="icon"
                             className="h-8 w-8"
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            disabled={item.quantity <= 1}
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
@@ -120,7 +133,7 @@ const Cart = () => {
                             <Plus className="h-4 w-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="text-right">
                           <p className="text-sm text-gray-600">
                             ${item.product.price.toFixed(2)} each
@@ -131,7 +144,7 @@ const Cart = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <Button
                       variant="ghost"
                       size="icon"
@@ -144,7 +157,7 @@ const Cart = () => {
                 </CardContent>
               </Card>
             ))}
-            
+
             <div className="flex justify-end">
               <Button
                 variant="outline"
@@ -178,20 +191,20 @@ const Cart = () => {
                     <span>Calculated at checkout</span>
                   </div>
                 </div>
-                
+
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
                     <span className="text-ethiopian-brown">${totalAmount.toFixed(2)}</span>
                   </div>
                 </div>
-                
+
                 <Link to="/checkout" className="w-full">
                   <Button className="w-full bg-ethiopian-brown hover:bg-ethiopian-brown/90">
                     Proceed to Checkout
                   </Button>
                 </Link>
-                
+
                 <p className="text-xs text-gray-500 text-center">
                   Secure checkout with 256-bit SSL encryption
                 </p>

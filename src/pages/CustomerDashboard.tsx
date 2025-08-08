@@ -388,7 +388,8 @@ const CustomerDashboard = () => {
                       <TableBody>
                         {orders.map((order) => (
                           <TableRow key={order.id}>
-                            <TableCell className="font-mono text-sm">{order.id.slice(0, 8)}</TableCell>
+                            <TableCell className="font-mono text-sm">{String(order.id).slice(0, 8)}</TableCell>
+
                             <TableCell>${Number(order.total_amount).toFixed(2)}</TableCell>
                             <TableCell>
                               <Badge variant={order.status === 'completed' ? 'default' : 'secondary'}>

@@ -14,10 +14,19 @@ import { ArrowLeft, ShoppingCart, CreditCard, Loader2 } from 'lucide-react';
 const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isApproved } = useCustomerApproval();
+  
   const { items, totalItems, totalAmount, clearCart } = useCartStore();
   const [isProcessing, setIsProcessing] = useState(false);
+ const { isApproved, isLoading: approvalLoading } = useCustomerApproval();
+  if (approvalLoading) {
+    return (
+      <div className="min-h-screen bg-ethiopian-cream/30 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-ethiopian-gold border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
+  // Show access required message if user is not logged in or not approved
   if (!user || !isApproved) {
     return (
       <div className="min-h-screen bg-ethiopian-cream/30">
@@ -27,7 +36,7 @@ const Checkout = () => {
               <ShoppingCart className="w-16 h-16 text-gray-400 mb-4" />
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Required</h2>
               <p className="text-center text-gray-600 mb-4">
-                You need to be registered and approved to checkout.
+                You need to be registered and approved to access your cart.
               </p>
               <Link to="/register">
                 <Button>Register Now</Button>
