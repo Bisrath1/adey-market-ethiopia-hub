@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+import { useAuthModal } from '@/contexts/AuthModalContext';
+
 interface AuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
   defaultMode?: 'login' | 'register';
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMode = 'login' }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ defaultMode = 'login' }) => {
+  const { isAuthModalOpen, closeAuthModal } = useAuthModal();
   const [mode, setMode] = useState<'login' | 'register'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +23,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMo
   const { login, register, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  if (!isOpen) return null;
+  if (!isAuthModalOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +35,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMo
       } else {
         await register(email, password, name);
       }
-      onClose();
+      closeAuthModal();
       setEmail('');
       setPassword('');
       setName('');
@@ -47,7 +48,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMo
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
         <button
-          onClick={onClose}
+          onClick={closeAuthModal}
           className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
         >
           <X className="w-5 h-5" />
@@ -136,7 +137,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMo
                 New customer?{' '}
                 <button
                   onClick={() => {
-                    onClose();
+                    closeAuthModal();
                     navigate('/register');
                   }}
                   className="text-ethiopian-red hover:underline font-medium"

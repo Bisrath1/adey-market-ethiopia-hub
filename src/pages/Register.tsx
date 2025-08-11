@@ -195,6 +195,7 @@ export const Register: React.FC = () => {
     if (!formData.state) newErrors.state = 'State is required';
     if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
     if (!formData.taxId.trim()) newErrors.taxId = 'Tax ID is required';
+    if (!formData.document) newErrors.document = 'EIN or Business Tax Registration Document is required';
 
     return newErrors;
   };
@@ -597,7 +598,7 @@ if (approvalStatus) {
 
               {/* EIN Document Upload */}
               <div className="space-y-2">
-                <Label htmlFor="document">Upload EIN Document (PDF, DOC, JPG, PNG) - Max 10MB</Label>
+                <Label htmlFor="document">Upload EIN Document (PDF, DOC, JPG, PNG) - Max 10MB *</Label>
                 <input
                   id="document"
                   type="file"

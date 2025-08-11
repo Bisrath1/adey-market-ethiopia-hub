@@ -7,14 +7,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useCartStore } from '@/stores/cartStore';
 import { Menu, User, LogOut, ShoppingCart, Shield, Search, X } from 'lucide-react';
-import { AuthModal } from './AuthModal';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import logo from './assets/logo.jpg';
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
   const { isAdmin } = useUserRole();
   const { totalItems } = useCartStore();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { openAuthModal } = useAuthModal();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
@@ -28,13 +28,16 @@ export const Navbar = () => {
     }
   };
 
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Shop', path: '/shop' },
-    { name: 'About', path: '/about' },
-    { name: 'Contact', path: '/contact' },
-    { name: 'Register', path: '/register' },
-  ];
+  // Filter nav links based on user role
+  const navLinks = isAdmin 
+    ? [] // Admin sees no navigation links except admin dashboard
+    : [
+        { name: 'Home', path: '/' },
+        { name: 'Shop', path: '/shop' },
+        { name: 'About', path: '/about' },
+        { name: 'Contact', path: '/contact' },
+        { name: 'Register', path: '/register' },
+      ];
 
   return (
     <>
@@ -83,19 +86,19 @@ export const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
-              {/* {user && (
-                <Link to="/customer-dashboard" className={`text-sm font-medium transition-colors ${
-                  isActive('/customer-dashboard') ? 'text-ethiopian-gold' : 'text-gray-700 hover:text-ethiopian-gold'
-                }`}>
-                  Dashboard
-                </Link>
-              )} */}
               {isAdmin && (
                 <Link to="/admin-dashboard" className={`text-sm font-medium transition-colors flex items-center gap-1 ${
                   isActive('/admin-dashboard') ? 'text-ethiopian-gold' : 'text-gray-700 hover:text-ethiopian-gold'
                 }`}>
                   <Shield className="w-4 h-4" />
-                  Admin
+                  Admin Dashboard
+                </Link>
+              )}
+              {isAdmin && (
+                <Link to="/admin-products" className={`text-sm font-medium transition-colors flex items-center gap-1 ${
+                  isActive('/admin-products') ? 'text-ethiopian-gold' : 'text-gray-700 hover:text-ethiopian-gold'
+                }`}>
+                  Products
                 </Link>
               )}
             </div>
@@ -123,7 +126,7 @@ export const Navbar = () => {
                   </Button>
                 </div>
               ) : (
-                <Button onClick={() => setIsAuthModalOpen(true)} size="sm" className="bg-ethiopian-gold hover:bg-ethiopian-gold/90">
+                <Button onClick={openAuthModal} size="sm" className="bg-ethiopian-gold hover:bg-ethiopian-gold/90">
                   <User className="w-4 h-4 mr-2" />
                   Sign In
                 </Button>
@@ -181,10 +184,15 @@ export const Navbar = () => {
                 </>
               )}
               {isAdmin && (
-                <Link to="/admin-dashboard" className="block text-sm font-medium text-gray-700 flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-                  <Shield className="w-4 h-4" />
-                  Admin Dashboard
-                </Link>
+                <>
+                  <Link to="/admin-dashboard" className="block text-sm font-medium text-gray-700 flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                    <Shield className="w-4 h-4" />
+                    Admin Dashboard
+                  </Link>
+                  <Link to="/admin-products" className="block text-sm font-medium text-gray-700" onClick={() => setIsMenuOpen(false)}>
+                    Products
+                  </Link>
+                </>
               )}
               <div className="pt-3 border-t">
                 {user ? (
@@ -193,7 +201,7 @@ export const Navbar = () => {
                     Logout
                   </Button>
                 ) : (
-                  <Button onClick={() => { setIsAuthModalOpen(true); setIsMenuOpen(false); }} size="sm" className="w-full">
+                  <Button onClick={() => { openAuthModal(); setIsMenuOpen(false); }} size="sm" className="w-full">
                     <User className="w-4 h-4 mr-2" />
                     Sign In
                   </Button>
@@ -203,7 +211,6 @@ export const Navbar = () => {
           </div>
         )}
       </nav>
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </>
   );
 };

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Eye, Heart, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCustomerApproval } from '@/hooks/useCustomerApproval';
 import { useCartStore } from '@/stores/cartStore';
 import { toast } from '@/hooks/use-toast';
-import { AuthModal } from '@/components/AuthModal';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
 
 import { Product } from '@/data/products';
@@ -18,11 +18,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { user } = useAuth();
   const { isApproved, approvalStatus } = useCustomerApproval();
   const { addItem } = useCartStore();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { openAuthModal } = useAuthModal();
 
   const handleAddToCart = () => {
     if (!user) {
-      setIsAuthModalOpen(true);
+      openAuthModal();
       return;
     }
 
@@ -111,7 +111,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               variant="outline"
               size="sm"
               className="border-ethiopian-gold text-ethiopian-brown hover:bg-ethiopian-brown hover:text-white transition-all duration-300"
-              onClick={() => setIsAuthModalOpen(true)}
+              onClick={openAuthModal}
             >
               {!user
                 ? 'Sign In for Price'
@@ -148,14 +148,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       {/* Bottom accent line */}
       <div className="h-1 bg-gradient-to-r from-ethiopian-gold via-ethiopian-green to-ethiopian-red transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-
-      {/* Only render AuthModal if user is NOT signed in */}
-      {!user && (
-        <AuthModal
-          isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
-        />
-      )}
     </div>
   );
 };

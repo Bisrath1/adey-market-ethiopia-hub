@@ -16,6 +16,14 @@ interface Customer {
   email: string;
   company_name: string;
   business_phone: string;
+  mobile_phone?: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  tax_id: string;
+  ein_document_url?: string;
   approval_status: string;
 }
 
@@ -174,8 +182,8 @@ const handleApproval = async (customerId: string, status: 'approved' | 'rejected
             </Card>
           </div>
 
-          {/* Customer Management Table */}
-          <Card>
+          {/* Customer Approvals Section */}
+          <Card className="mb-8">
             <CardHeader>
               <CardTitle>Customer Approvals</CardTitle>
             </CardHeader>
@@ -187,6 +195,8 @@ const handleApproval = async (customerId: string, status: 'approved' | 'rejected
                     <TableHead>Company</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
+                    <TableHead>Tax ID</TableHead>
+                    <TableHead>Address</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -194,17 +204,24 @@ const handleApproval = async (customerId: string, status: 'approved' | 'rejected
                 <TableBody>
                   {pendingCustomers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-gray-500">
+                      <TableCell colSpan={8} className="text-center text-gray-500">
                         No pending customers for approval
                       </TableCell>
                     </TableRow>
                   ) : (
                     pendingCustomers.map((customer) => (
                       <TableRow key={customer.id}>
-                        <TableCell>{customer.full_name}</TableCell>
+                        <TableCell className="font-medium">{customer.full_name}</TableCell>
                         <TableCell>{customer.company_name}</TableCell>
                         <TableCell>{customer.email}</TableCell>
                         <TableCell>{customer.business_phone}</TableCell>
+                        <TableCell>{customer.tax_id}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {customer.street}<br />
+                            {customer.city}, {customer.state} {customer.zip}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="secondary">{customer.approval_status}</Badge>
                         </TableCell>
@@ -221,6 +238,74 @@ const handleApproval = async (customerId: string, status: 'approved' | 'rejected
                               Reject
                             </Button>
                           </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Approved Customers Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Approved Customers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Tax ID</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {approvedCustomers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-gray-500">
+                        No approved customers
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    approvedCustomers.map((customer) => (
+                      <TableRow key={customer.id}>
+                        <TableCell className="font-medium">{customer.full_name}</TableCell>
+                        <TableCell>{customer.company_name}</TableCell>
+                        <TableCell>{customer.email}</TableCell>
+                        <TableCell>{customer.business_phone}</TableCell>
+                        <TableCell>{customer.tax_id}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {customer.street}<br />
+                            {customer.city}, {customer.state} {customer.zip}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="default" className="bg-green-100 text-green-800">
+                            {customer.approval_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              // Mock customer detail view
+                              toast({
+                                title: "Customer Details",
+                                description: `${customer.full_name} - ${customer.company_name}`,
+                              });
+                            }}
+                          >
+                            View Details
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))

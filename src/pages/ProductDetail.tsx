@@ -5,14 +5,14 @@ import { ArrowLeft, MapPin, ShoppingCart, Heart, Share2, Info } from 'lucide-rea
 import { products } from '@/data/products';
 import { ProductCard } from '@/components/ProductCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthModal } from '@/components/AuthModal';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
 
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
   const [quantity, setQuantity] = useState(1);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const product = products.find(p => p.id === id);
   const relatedProducts = products
@@ -36,7 +36,7 @@ export const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     if (!user) {
-      setIsAuthModalOpen(true);
+      openAuthModal();
       return;
     }
     // Add to cart logic would go here
@@ -91,7 +91,7 @@ export const ProductDetail: React.FC = () => {
                 ) : (
                   <div className="mb-6">
                     <Button
-                      onClick={() => setIsAuthModalOpen(true)}
+                      onClick={openAuthModal}
                       className="bg-ethiopian-gold hover:bg-ethiopian-gold/90 text-ethiopian-brown text-lg px-6 py-3"
                     >
                       Login to see price
@@ -191,10 +191,7 @@ export const ProductDetail: React.FC = () => {
         </div>
       </div>
 
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-      />
+      {/* AuthModal is now handled globally */}
     </>
   );
 };
