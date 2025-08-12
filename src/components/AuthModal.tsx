@@ -31,14 +31,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ defaultMode = 'login' }) =
 
     try {
       if (mode === 'login') {
-        await login(email, password);
+        const result = await login(email, password);
+        if (!result.error) {
+          closeAuthModal();
+          setEmail('');
+          setPassword('');
+          setName('');
+        } else {
+          setError(result.error);
+        }
       } else {
-        await register(email, password, name);
+        const result = await register(email, password, name);
+        if (!result.error) {
+          closeAuthModal();
+          setEmail('');
+          setPassword('');
+          setName('');
+        } else {
+          setError(result.error);
+        }
       }
-      closeAuthModal();
-      setEmail('');
-      setPassword('');
-      setName('');
     } catch (err) {
       setError('Authentication failed. Please try again.');
     }

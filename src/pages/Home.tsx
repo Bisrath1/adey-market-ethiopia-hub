@@ -2,12 +2,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Coffee, Star, MapPin, Phone, Mail } from 'lucide-react';
-import { products, categories } from '@/data/products';
+import { categories } from '@/data/products';
+import { useProductStore } from '@/stores/productStore';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 
 export const Home: React.FC = () => {
-  const featuredProducts = products.filter(product => product.featured);
+  const { getFeaturedProducts } = useProductStore();
+  const featuredProducts = getFeaturedProducts();
 
   return (
     <div className="min-h-screen">

@@ -2,7 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Filter, Grid, List } from 'lucide-react';
-import { products, categories } from '@/data/products';
+import { categories } from '@/data/products';
+import { useProductStore } from '@/stores/productStore';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,6 +12,7 @@ export const Shop: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('name');
+  const { products } = useProductStore();
   
   const categoryParam = searchParams.get('category');
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
@@ -38,7 +40,7 @@ export const Shop: React.FC = () => {
     });
 
     return filtered;
-  }, [selectedCategory, sortBy]);
+  }, [products, selectedCategory, sortBy]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);

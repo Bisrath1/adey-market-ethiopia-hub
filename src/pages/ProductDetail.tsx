@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, ShoppingCart, Heart, Share2, Info } from 'lucide-react';
-import { products } from '@/data/products';
+import { useProductStore } from '@/stores/productStore';
 import { ProductCard } from '@/components/ProductCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
@@ -12,9 +12,10 @@ export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
+  const { products, getProduct } = useProductStore();
   const [quantity, setQuantity] = useState(1);
 
-  const product = products.find(p => p.id === id);
+  const product = id ? getProduct(id) : undefined;
   const relatedProducts = products
     .filter(p => p.category === product?.category && p.id !== id)
     .slice(0, 4);

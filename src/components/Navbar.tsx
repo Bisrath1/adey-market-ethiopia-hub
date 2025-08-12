@@ -57,21 +57,23 @@ export const Navbar = () => {
               </div>
             </Link>
 
-            {/* Desktop Search */}
-            <div className="hidden md:flex flex-1 max-w-md mx-8">
-              <form onSubmit={handleSearch} className="relative w-full">
-                <Input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-10 border-ethiopian-gold/30 focus:border-ethiopian-gold"
-                />
-                <Button type="submit" size="sm" variant="ghost" className="absolute right-0 top-0 h-full px-3">
-                  <Search className="w-4 h-4 text-ethiopian-brown" />
-                </Button>
-              </form>
-            </div>
+            {/* Desktop Search - only for non-admin users */}
+            {!isAdmin && (
+              <div className="hidden md:flex flex-1 max-w-md mx-8">
+                <form onSubmit={handleSearch} className="relative w-full">
+                  <Input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pr-10 border-ethiopian-gold/30 focus:border-ethiopian-gold"
+                  />
+                  <Button type="submit" size="sm" variant="ghost" className="absolute right-0 top-0 h-full px-3">
+                    <Search className="w-4 h-4 text-ethiopian-brown" />
+                  </Button>
+                </form>
+              </div>
+            )}
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
@@ -105,7 +107,7 @@ export const Navbar = () => {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center space-x-4">
-              {user && (
+              {user && !isAdmin && (
                 <Link to="/cart" className="relative">
                   <Button variant="ghost" size="sm">
                     <ShoppingCart className="w-5 h-5" />
@@ -141,21 +143,23 @@ export const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile Search */}
-          <div className="md:hidden pb-3">
-            <form onSubmit={handleSearch} className="relative">
-              <Input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
-              />
-              <Button type="submit" size="sm" variant="ghost" className="absolute right-0 top-0 h-full px-3">
-                <Search className="w-4 h-4" />
-              </Button>
-            </form>
-          </div>
+          {/* Mobile Search - only for non-admin users */}
+          {!isAdmin && (
+            <div className="md:hidden pb-3">
+              <form onSubmit={handleSearch} className="relative">
+                <Input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pr-10"
+                />
+                <Button type="submit" size="sm" variant="ghost" className="absolute right-0 top-0 h-full px-3">
+                  <Search className="w-4 h-4" />
+                </Button>
+              </form>
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -172,7 +176,7 @@ export const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
-              {user && (
+              {user && !isAdmin && (
                 <>
                   <Link to="/customer-dashboard" className="block text-sm font-medium text-gray-700" onClick={() => setIsMenuOpen(false)}>
                     Dashboard

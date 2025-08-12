@@ -93,14 +93,25 @@ useEffect(() => {
 
       if (data.user) {
         await fetchProfile(data.user.id);
+        
+        // Check if user is admin and redirect accordingly
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+        
+        if (roleData?.role === 'admin') {
+          navigate("/admin");
+        } else {
+          navigate("/register");
+        }
       }
 
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
-
-      navigate("/register");
 
       return {};
     } catch (error) {

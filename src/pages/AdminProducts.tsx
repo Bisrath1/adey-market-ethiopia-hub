@@ -11,71 +11,35 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { toast } from '@/hooks/use-toast';
-import { Upload, Plus, Edit, Trash2, Package, XCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, XCircle } from 'lucide-react';
+import { useProductStore } from '@/stores/productStore';
+import { categories } from '@/data/products';
 
-// Mock products data - in real app this would come from backend
-const mockProducts = [
-  {
-    id: '1',
-    name: 'Premium Ethiopian Coffee Beans',
-    category: 'coffee',
-    price: 24.99,
-    description: 'Premium single-origin coffee beans from Yirgacheffe region',
-    image: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400&h=300&fit=crop',
-    origin: 'Yirgacheffe, Ethiopia',
-    featured: true,
-    inStock: true
-  },
-  {
-    id: '2',
-    name: 'Traditional Berbere Spice Blend',
-    category: 'spices',
-    price: 18.50,
-    description: 'Authentic Ethiopian spice blend perfect for traditional dishes',
-    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&h=300&fit=crop',
-    origin: 'Addis Ababa, Ethiopia',
-    featured: false,
-    inStock: true
-  }
-];
-
-const categories = [
-  { id: 'coffee', name: 'Coffee' },
-  { id: 'spices', name: 'Spices & Seasonings' },
-  { id: 'textiles', name: 'Textiles' },
-  { id: 'crafts', name: 'Handicrafts' },
-  { id: 'food', name: 'Food Products' },
-  { id: 'household', name: 'Household Items' }
-];
-
-interface Product {
-  id: string;
+interface ProductFormData {
   name: string;
   category: string;
-  price: number;
+  price: string;
   description: string;
   image: string;
   origin: string;
   featured: boolean;
-  inStock: boolean;
 }
 
 const AdminProducts = () => {
   const { user } = useAuth();
   const { isAdmin, isLoading: roleLoading } = useUserRole();
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const { products, addProduct, updateProduct, deleteProduct } = useProductStore();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<string | null>(null);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     category: '',
     price: '',
     description: '',
     image: '',
     origin: '',
-    featured: false,
-    inStock: true
+    featured: false
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -102,26 +66,24 @@ const AdminProducts = () => {
       return;
     }
 
-    const newProduct: Product = {
-      id: editingProduct?.id || Date.now().toString(),
+    const productData = {
       name: formData.name,
-      category: formData.category,
+      category: formData.category as any,
       price: parseFloat(formData.price),
       description: formData.description,
       image: formData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop',
       origin: formData.origin || 'Ethiopia',
       featured: formData.featured,
-      inStock: formData.inStock
     };
 
     if (editingProduct) {
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? newProduct : p));
+      updateProduct(editingProduct, productData);
       toast({
         title: "Success",
         description: "Product updated successfully",
       });
     } else {
-      setProducts(prev => [...prev, newProduct]);
+      addProduct(productData);
       toast({
         title: "Success",
         description: "Product added successfully",
@@ -136,15 +98,14 @@ const AdminProducts = () => {
       description: '',
       image: '',
       origin: '',
-      featured: false,
-      inStock: true
+      featured: false
     });
     setShowAddForm(false);
     setEditingProduct(null);
   };
 
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
+  const handleEdit = (product: any) => {
+    setEditingProduct(product.id);
     setFormData({
       name: product.name,
       category: product.category,
@@ -152,14 +113,13 @@ const AdminProducts = () => {
       description: product.description,
       image: product.image,
       origin: product.origin,
-      featured: product.featured,
-      inStock: product.inStock
+      featured: product.featured
     });
     setShowAddForm(true);
   };
 
   const handleDelete = (productId: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
+    deleteProduct(productId);
     toast({
       title: "Success",
       description: "Product deleted successfully",
@@ -174,8 +134,7 @@ const AdminProducts = () => {
       description: '',
       image: '',
       origin: '',
-      featured: false,
-      inStock: true
+      featured: false
     });
     setShowAddForm(false);
     setEditingProduct(null);
@@ -245,7 +204,7 @@ const AdminProducts = () => {
                 <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{products.filter(p => p.inStock).length}</div>
+                <div className="text-2xl font-bold">{products.length}</div>
               </CardContent>
             </Card>
           </div>
@@ -353,17 +312,6 @@ const AdminProducts = () => {
                       />
                       <span className="text-sm font-medium">Featured Product</span>
                     </label>
-                    
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        name="inStock"
-                        checked={formData.inStock}
-                        onChange={handleInputChange}
-                        className="rounded border-gray-300"
-                      />
-                      <span className="text-sm font-medium">In Stock</span>
-                    </label>
                   </div>
                   
                   <div className="flex gap-4">
@@ -393,7 +341,7 @@ const AdminProducts = () => {
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Origin</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Featured</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -421,16 +369,11 @@ const AdminProducts = () => {
                         <TableCell>${product.price.toFixed(2)}</TableCell>
                         <TableCell>{product.origin}</TableCell>
                         <TableCell>
-                          <div className="flex gap-1">
-                            {product.featured && (
-                              <Badge variant="default" className="bg-ethiopian-gold text-ethiopian-brown">
-                                Featured
-                              </Badge>
-                            )}
-                            <Badge variant={product.inStock ? 'default' : 'secondary'}>
-                              {product.inStock ? 'In Stock' : 'Out of Stock'}
+                          {product.featured && (
+                            <Badge variant="default" className="bg-ethiopian-gold text-ethiopian-brown">
+                              Featured
                             </Badge>
-                          </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
