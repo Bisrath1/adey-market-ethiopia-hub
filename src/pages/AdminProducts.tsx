@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,46 +7,66 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
+import { Plus, Edit, Trash2, Package, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { toast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Package, XCircle } from 'lucide-react';
-import { useProductStore } from '@/stores/productStore';
+import { supabase } from '@/integrations/supabase/client';
 import { categories } from '@/data/products';
 
-interface ProductFormData {
+interface Product {
+  id: string;
   name: string;
   category: string;
-  price: string;
+  price: number;
   description: string;
   image: string;
   origin: string;
   featured: boolean;
 }
 
-const AdminProducts = () => {
+const AdminProducts: React.FC = () => {
+  
   const { user } = useAuth();
   const { isAdmin, isLoading: roleLoading } = useUserRole();
-  const { products, addProduct, updateProduct, deleteProduct } = useProductStore();
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<string | null>(null);
-  
-  const [formData, setFormData] = useState<ProductFormData>({
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const [formData, setFormData] = useState<Omit<Product, 'id'>>({
     name: '',
     category: '',
-    price: '',
+    price: 0,
     description: '',
     image: '',
     origin: '',
-    featured: false
+    featured: false,
   });
+
+  // Fetch products from Supabase
+  const fetchProducts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from('products').select('*');
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else if (data) {
+      setProducts(data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (isAdmin) fetchProducts();
+  }, [isAdmin]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
@@ -54,113 +74,92 @@ const AdminProducts = () => {
     setFormData(prev => ({ ...prev, category: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.category || !formData.price || !formData.description) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: 'Fill all required fields', variant: 'destructive' });
       return;
     }
 
-    const productData = {
-      name: formData.name,
-      category: formData.category as any,
-      price: parseFloat(formData.price),
-      description: formData.description,
+    const productPayload = {
+      ...formData,
+      price: Number(formData.price),
       image: formData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop',
       origin: formData.origin || 'Ethiopia',
-      featured: formData.featured,
     };
 
+    setLoading(true);
+
     if (editingProduct) {
-      updateProduct(editingProduct, productData);
-      toast({
-        title: "Success",
-        description: "Product updated successfully",
-      });
+      const { error } = await supabase
+        .from('products')
+        .update(productPayload)
+        .eq('id', editingProduct.id);
+
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Success', description: 'Product updated' });
+        fetchProducts();
+      }
     } else {
-      addProduct(productData);
-      toast({
-        title: "Success",
-        description: "Product added successfully",
-      });
+      const { error } = await supabase.from('products').insert(productPayload);
+
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Success', description: 'Product added' });
+        fetchProducts();
+      }
     }
 
-    // Reset form
     setFormData({
       name: '',
       category: '',
-      price: '',
+      price: 0,
       description: '',
       image: '',
       origin: '',
-      featured: false
+      featured: false,
     });
-    setShowAddForm(false);
     setEditingProduct(null);
+    setShowForm(false);
+    setLoading(false);
   };
 
-  const handleEdit = (product: any) => {
-    setEditingProduct(product.id);
-    setFormData({
-      name: product.name,
-      category: product.category,
-      price: product.price.toString(),
-      description: product.description,
-      image: product.image,
-      origin: product.origin,
-      featured: product.featured
-    });
-    setShowAddForm(true);
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setFormData({ ...product });
+    setShowForm(true);
   };
 
-  const handleDelete = (productId: string) => {
-    deleteProduct(productId);
-    toast({
-      title: "Success",
-      description: "Product deleted successfully",
-    });
-  };
-
-  const handleCancel = () => {
-    setFormData({
-      name: '',
-      category: '',
-      price: '',
-      description: '',
-      image: '',
-      origin: '',
-      featured: false
-    });
-    setShowAddForm(false);
-    setEditingProduct(null);
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Deleted', description: 'Product removed' });
+      fetchProducts();
+    }
   };
 
   if (roleLoading) {
     return (
-      <div className="min-h-screen bg-ethiopian-cream/30 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <div className="w-8 h-8 animate-spin border-4 border-ethiopian-gold border-t-transparent rounded-full mb-4" />
-            <p className="text-center text-gray-600">Loading...</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="w-12 h-12 border-4 border-ethiopian-gold border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-ethiopian-cream/30 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <XCircle className="w-16 h-16 text-red-500 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-center text-gray-600">You don't have permission to access this page.</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <Card className="p-8">
+          <CardContent className="text-center">
+            <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold">Access Denied</h2>
+            <p className="text-gray-600">You do not have permission to access this page.</p>
           </CardContent>
         </Card>
       </div>
@@ -169,166 +168,71 @@ const AdminProducts = () => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-ethiopian-cream/30">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-ethiopian-brown mb-2">Product Management</h1>
-            <p className="text-gray-600">Add, edit, and manage your products</p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{products.length}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Featured Products</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{products.filter(p => p.featured).length}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">In Stock</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{products.length}</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Add Product Button */}
-          <div className="mb-6">
-            <Button onClick={() => setShowAddForm(true)} className="bg-ethiopian-gold hover:bg-ethiopian-gold/90">
-              <Plus className="w-4 h-4 mr-2" />
-              Add New Product
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold text-ethiopian-brown">Product Management</h1>
+            <Button onClick={() => setShowForm(true)} className="bg-ethiopian-gold hover:bg-ethiopian-gold/90">
+              <Plus className="w-4 h-4 mr-2" /> Add Product
             </Button>
           </div>
 
-          {/* Add/Edit Product Form */}
-          {showAddForm && (
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Product Name *</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category *</Label>
-                      <Select value={formData.category} onValueChange={handleCategoryChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map(category => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Price *</Label>
-                      <Input
-                        id="price"
-                        name="price"
-                        type="number"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="origin">Origin</Label>
-                      <Input
-                        id="origin"
-                        name="origin"
-                        value={formData.origin}
-                        onChange={handleInputChange}
-                        placeholder="e.g., Yirgacheffe, Ethiopia"
-                      />
-                    </div>
+          {showForm && (
+            <Card className="mb-6 p-6 bg-white shadow-lg rounded-xl">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Name *</Label>
+                    <Input name="name" value={formData.name} onChange={handleInputChange} required />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description *</Label>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      rows={3}
-                      required
-                    />
+                  <div>
+                    <Label htmlFor="category">Category *</Label>
+                    <Select value={formData.category} onValueChange={handleCategoryChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="image">Image URL</Label>
-                    <Input
-                      id="image"
-                      name="image"
-                      value={formData.image}
-                      onChange={handleInputChange}
-                      placeholder="https://example.com/image.jpg"
-                    />
+                  <div>
+                    <Label htmlFor="price">Price *</Label>
+                    <Input name="price" type="number" value={formData.price} onChange={handleInputChange} required />
                   </div>
-                  
-                  <div className="flex items-center space-x-6">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        name="featured"
-                        checked={formData.featured}
-                        onChange={handleInputChange}
-                        className="rounded border-gray-300"
-                      />
-                      <span className="text-sm font-medium">Featured Product</span>
-                    </label>
+                  <div>
+                    <Label htmlFor="origin">Origin</Label>
+                    <Input name="origin" value={formData.origin} onChange={handleInputChange} placeholder="e.g., Yirgacheffe" />
                   </div>
-                  
-                  <div className="flex gap-4">
-                    <Button type="submit" className="bg-ethiopian-gold hover:bg-ethiopian-gold/90">
-                      {editingProduct ? 'Update Product' : 'Add Product'}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={handleCancel}>
-                      Cancel
-                    </Button>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea name="description" value={formData.description} onChange={handleInputChange} required />
+                </div>
+
+                <div>
+                  <Label htmlFor="image">Image URL</Label>
+                  <Input name="image" value={formData.image} onChange={handleInputChange} />
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center space-x-2">
+                    <input type="checkbox" name="featured" checked={formData.featured} onChange={handleInputChange} />
+                    <span>Featured Product</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <Button type="submit" className="bg-ethiopian-gold hover:bg-ethiopian-gold/90">{editingProduct ? 'Update' : 'Add'}</Button>
+                    <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingProduct(null); }}>Cancel</Button>
                   </div>
-                </form>
-              </CardContent>
+                </div>
+              </form>
             </Card>
           )}
 
-          {/* Products Table */}
-          <Card>
+          <Card className="shadow-lg rounded-xl overflow-hidden">
             <CardHeader>
               <CardTitle>All Products</CardTitle>
             </CardHeader>
@@ -346,55 +250,24 @@ const AdminProducts = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center text-gray-500">
-                        No products added yet
+                  {products.map(product => (
+                    <TableRow key={product.id}>
+                      <TableCell><img src={product.image} alt={product.name} className="w-16 h-16 rounded-lg object-cover" /></TableCell>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell>{categories.find(c => c.id === product.category)?.name || product.category}</TableCell>
+                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell>{product.origin}</TableCell>
+                      <TableCell>{product.featured && <Badge className="bg-ethiopian-gold text-ethiopian-brown">Featured</Badge>}</TableCell>
+                      <TableCell className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(product)}><Edit className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDelete(product.id)}><Trash2 className="w-4 h-4" /></Button>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    products.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell>
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-16 h-16 object-cover rounded-lg"
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>
-                          {categories.find(c => c.id === product.category)?.name || product.category}
-                        </TableCell>
-                        <TableCell>${product.price.toFixed(2)}</TableCell>
-                        <TableCell>{product.origin}</TableCell>
-                        <TableCell>
-                          {product.featured && (
-                            <Badge variant="default" className="bg-ethiopian-gold text-ethiopian-brown">
-                              Featured
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(product)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(product.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                  ))}
+                  {products.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-gray-500">No products available</TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>

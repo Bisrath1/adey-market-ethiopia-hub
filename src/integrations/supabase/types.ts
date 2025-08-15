@@ -5,6 +5,18 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
+// types/Product.ts
+export interface Product {
+  id: string;
+  name: string;
+  category: string;
+  origin: string;
+  price: number;
+  image: string;
+  description: string;
+  cultural_notes?: string;
+  featured: boolean;
+}
 
 export type Database = {
   // Allows to automatically instanciate createClient with right options

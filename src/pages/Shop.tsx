@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Filter, Grid, List } from 'lucide-react';
 import { categories } from '@/data/products';
-import { useProductStore } from '@/stores/productStore';
+import { useProducts } from '@/hooks/useProducts';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,20 +11,19 @@ export const Shop: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('name');
-  const { products } = useProductStore();
-  
+
+  const { products, loading, error } = useProducts();
+
   const categoryParam = searchParams.get('category');
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
 
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = products;
 
-    // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(product => product.category === selectedCategory);
     }
 
-    // Sort products
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
@@ -33,9 +31,8 @@ export const Shop: React.FC = () => {
         case 'price-high':
           return b.price - a.price;
         case 'name':
-          return a.name.localeCompare(b.name);
         default:
-          return 0;
+          return a.name.localeCompare(b.name);
       }
     });
 
@@ -159,18 +156,25 @@ export const Shop: React.FC = () => {
               </div>
             </div>
 
-            {/* Products Grid */}
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                : 'grid-cols-1'
-            }`}>
-              {filteredAndSortedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {/* Loading / Error */}
+            {loading && <p className="text-center py-8">Loading products...</p>}
+            {error && <p className="text-center py-8 text-red-500">{error}</p>}
 
-            {filteredAndSortedProducts.length === 0 && (
+            {/* Products Grid */}
+            {!loading && !error && filteredAndSortedProducts.length > 0 && (
+              <div className={`grid gap-6 ${
+                viewMode === 'grid' 
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+                  : 'grid-cols-1'
+              }`}>
+                {filteredAndSortedProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+
+            {/* No Products Found */}
+            {!loading && filteredAndSortedProducts.length === 0 && (
               <div className="text-center py-16">
                 <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Filter className="w-8 h-8 text-gray-400" />
