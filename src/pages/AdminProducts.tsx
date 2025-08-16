@@ -8,12 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Package, XCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { supabase } from '@/integrations/supabase/client';
 import { categories } from '@/data/products';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Product {
   id: string;
@@ -27,7 +28,6 @@ interface Product {
 }
 
 const AdminProducts: React.FC = () => {
-  
   const { user } = useAuth();
   const { isAdmin, isLoading: roleLoading } = useUserRole();
 
@@ -92,6 +92,7 @@ const AdminProducts: React.FC = () => {
     setLoading(true);
 
     if (editingProduct) {
+      // Update existing product
       const { error } = await supabase
         .from('products')
         .update(productPayload)
@@ -104,7 +105,10 @@ const AdminProducts: React.FC = () => {
         fetchProducts();
       }
     } else {
-      const { error } = await supabase.from('products').insert(productPayload);
+      // Add new product with generated UUID
+      const { error } = await supabase
+        .from('products')
+        .insert([{ id: uuidv4(), ...productPayload }]);
 
       if (error) {
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
