@@ -102,7 +102,7 @@ useEffect(() => {
           .maybeSingle();
         
         if (roleData?.role === 'admin') {
-          navigate("/admin");
+          navigate("/admin-dashboard");
         } else {
           navigate("/register");
         }

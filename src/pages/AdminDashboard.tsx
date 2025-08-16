@@ -82,34 +82,41 @@ const handleApproval = async (customerId: string, status: 'approved' | 'rejected
   try {
     const { data, error } = await supabase
       .from('customers')
-      .update({
-        approval_status: status
-        // Remove approved_at and approved_by since they don't exist
-      })
-      .eq('id', customerId);
+      .update({ approval_status: status })
+      .eq('id', customerId)
+      .select()
+      .single();
 
-    if (error) {
-      console.error('Update error:', error);
-      throw error;
+    if (error) throw error;
+
+    // ✅ If approved, send email
+    if (status === "approved" && data?.email) {
+      await fetch("http://localhost:4242/email-veri", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: data.email,
+          full_name: data.full_name,
+        }),
+      });
     }
 
-    console.log('Update success:', data);
-
     toast({
-      title: 'Success',
+      title: "Success",
       description: `Customer ${status} successfully`,
     });
 
-    fetchData(); // Refresh the list after updating
+    fetchData();
   } catch (error) {
-    console.error('Error updating approval status:', error);
+    console.error("Error updating approval status:", error);
     toast({
-      title: 'Error',
-      description: 'Failed to update customer status',
-      variant: 'destructive',
+      title: "Error",
+      description: "Failed to update customer status",
+      variant: "destructive",
     });
   }
 };
+
 
 
 
