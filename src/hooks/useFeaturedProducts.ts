@@ -14,19 +14,22 @@ export const useFeaturedProducts = () => {
 
       try {
         const { data, error } = await supabase
-          .from('featured_products')
-          .select('*'); // no need to join unless you want full product info
+          .from('products')
+          .select('*')
+          .eq('featured', true); // ✅ filter by featured flag
 
         if (error) throw error;
 
+        // Map database rows into Product type
         const productsData: Product[] = (data || []).map((item: any) => ({
-          id: item.product_id || item.id,
-          name: item.title,
+          id: item.id,
+          name: item.name,
           description: item.description,
-          image: item.image_url,
-          category: item.category || 'general', // default value
-          origin: item.origin || 'Ethiopia',   // default value
-          price: item.price || 0,              // default value
+          image: item.image,
+          category: item.category,
+          origin: item.origin,
+          price: item.price,
+          featured: item.featured,
         }));
 
         setFeaturedProducts(productsData);
