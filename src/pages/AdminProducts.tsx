@@ -7,38 +7,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { supabase } from '@/integrations/supabase/client';
-import { categories } from '@/data/products';
-import { v4 as uuidv4 } from 'uuid';
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  description: string;
-  image: string;
-  origin: string;
-  featured: boolean;
-}
+import { useProductStore } from '@/stores/productStore';
+import { categories, Product } from '@/data/products';
 
 const AdminProducts: React.FC = () => {
   const { user } = useAuth();
   const { isAdmin, isLoading: roleLoading } = useUserRole();
+  const { products, addProduct, updateProduct, deleteProduct } = useProductStore();
 
-  const [products, setProducts] = useState<Product[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState<Omit<Product, 'id'>>({
     name: '',
-    category: '',
+    category: 'coffee',
     price: 0,
     description: '',
     image: '',
@@ -46,21 +36,15 @@ const AdminProducts: React.FC = () => {
     featured: false,
   });
 
-  // Fetch products from Supabase
-  const fetchProducts = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from('products').select('*');
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else if (data) {
-      setProducts(data);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (isAdmin) fetchProducts();
-  }, [isAdmin]);
+  const [editFormData, setEditFormData] = useState<Omit<Product, 'id'>>({
+    name: '',
+    category: 'coffee',
+    price: 0,
+    description: '',
+    image: '',
+    origin: '',
+    featured: false,
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -70,8 +54,20 @@ const AdminProducts: React.FC = () => {
     }));
   };
 
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+    }));
+  };
+
   const handleCategoryChange = (value: string) => {
-    setFormData(prev => ({ ...prev, category: value }));
+    setFormData(prev => ({ ...prev, category: value as Product['category'] }));
+  };
+
+  const handleEditCategoryChange = (value: string) => {
+    setEditFormData(prev => ({ ...prev, category: value as Product['category'] }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,60 +87,69 @@ const AdminProducts: React.FC = () => {
 
     setLoading(true);
 
-    if (editingProduct) {
-      // Update existing product
-      const { error } = await supabase
-        .from('products')
-        .update(productPayload)
-        .eq('id', editingProduct.id);
-
-      if (error) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      } else {
-        toast({ title: 'Success', description: 'Product updated' });
-        fetchProducts();
-      }
-    } else {
-      // Add new product with generated UUID
-      const { error } = await supabase
-        .from('products')
-        .insert([{ id: uuidv4(), ...productPayload }]);
-
-      if (error) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      } else {
-        toast({ title: 'Success', description: 'Product added' });
-        fetchProducts();
-      }
+    try {
+      addProduct(productPayload);
+      toast({ title: 'Success', description: 'Product added successfully' });
+      
+      setFormData({
+        name: '',
+        category: 'coffee',
+        price: 0,
+        description: '',
+        image: '',
+        origin: '',
+        featured: false,
+      });
+      setShowForm(false);
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to add product', variant: 'destructive' });
+    } finally {
+      setLoading(false);
     }
-
-    setFormData({
-      name: '',
-      category: '',
-      price: 0,
-      description: '',
-      image: '',
-      origin: '',
-      featured: false,
-    });
-    setEditingProduct(null);
-    setShowForm(false);
-    setLoading(false);
   };
 
-  const handleEdit = (product: Product) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editFormData.name || !editFormData.category || !editFormData.price || !editFormData.description) {
+      toast({ title: 'Error', description: 'Fill all required fields', variant: 'destructive' });
+      return;
+    }
+
+    const productPayload = {
+      ...editFormData,
+      price: Number(editFormData.price),
+      image: editFormData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop',
+      origin: editFormData.origin || 'Ethiopia',
+    };
+
+    setLoading(true);
+
+    try {
+      updateProduct(editingProduct.id, productPayload);
+      toast({ title: 'Success', description: 'Product updated successfully' });
+      
+      setShowEditModal(false);
+      setEditingProduct(null);
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update product', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (product: any) => {
     setEditingProduct(product);
-    setFormData({ ...product });
-    setShowForm(true);
+    setEditFormData({ ...product });
+    setShowEditModal(true);
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('products').delete().eq('id', id);
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Deleted', description: 'Product removed' });
-      fetchProducts();
+    try {
+      deleteProduct(id);
+      toast({ title: 'Success', description: 'Product deleted successfully' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete product', variant: 'destructive' });
     }
   };
 
@@ -263,8 +268,12 @@ const AdminProducts: React.FC = () => {
                       <TableCell>{product.origin}</TableCell>
                       <TableCell>{product.featured && <Badge className="bg-ethiopian-gold text-ethiopian-brown">Featured</Badge>}</TableCell>
                       <TableCell className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(product)}><Edit className="w-4 h-4" /></Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDelete(product.id)}><Trash2 className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(product)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDelete(product.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -277,6 +286,108 @@ const AdminProducts: React.FC = () => {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Edit Product Modal */}
+          <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Product</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-name">Name *</Label>
+                    <Input 
+                      id="edit-name"
+                      name="name" 
+                      value={editFormData.name} 
+                      onChange={handleEditInputChange} 
+                      required 
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-category">Category *</Label>
+                    <Select value={editFormData.category} onValueChange={handleEditCategoryChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-price">Price *</Label>
+                    <Input 
+                      id="edit-price"
+                      name="price" 
+                      type="number" 
+                      value={editFormData.price} 
+                      onChange={handleEditInputChange} 
+                      required 
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-origin">Origin</Label>
+                    <Input 
+                      id="edit-origin"
+                      name="origin" 
+                      value={editFormData.origin} 
+                      onChange={handleEditInputChange} 
+                      placeholder="e.g., Yirgacheffe" 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-description">Description *</Label>
+                  <Textarea 
+                    id="edit-description"
+                    name="description" 
+                    value={editFormData.description} 
+                    onChange={handleEditInputChange} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-image">Image URL</Label>
+                  <Input 
+                    id="edit-image"
+                    name="image" 
+                    value={editFormData.image} 
+                    onChange={handleEditInputChange} 
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      name="featured" 
+                      checked={editFormData.featured} 
+                      onChange={handleEditInputChange} 
+                    />
+                    <span>Featured Product</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={loading} className="bg-ethiopian-gold hover:bg-ethiopian-gold/90">
+                      {loading ? 'Updating...' : 'Update Product'}
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setShowEditModal(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </ProtectedRoute>

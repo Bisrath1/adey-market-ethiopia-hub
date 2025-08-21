@@ -8,7 +8,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useCartStore } from '@/stores/cartStore';
 import { Menu, User, LogOut, ShoppingCart, Shield, Search, X } from 'lucide-react';
 import { useAuthModal } from '@/contexts/AuthModalContext';
-import logo from './assets/logo.jpg';
+
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
@@ -47,14 +47,10 @@ export const Navbar = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3">
               <img
-                src={logo}
-                alt="Adey Market Logo"
-                className="w-10 h-10 rounded-full object-cover border border-ethiopian-gold"
+                src="/lovable-uploads/fdc59d66-e720-452b-b35a-367a6e35efcb.png"
+                alt="Adey International Market Logo"
+                className="h-12 w-auto object-contain"
               />
-              <div>
-                <h1 className="text-xl font-bold text-ethiopian-brown">Adey Market</h1>
-                <p className="text-xs text-gray-600 -mt-1">Ethiopian Heritage</p>
-              </div>
             </Link>
 
             {/* Desktop Search - only for non-admin users */}

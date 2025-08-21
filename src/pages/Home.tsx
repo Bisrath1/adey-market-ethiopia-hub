@@ -176,13 +176,11 @@ const Home: React.FC = () => {
             {/* Company Info */}
             <div className="lg:col-span-2">
               <div className="flex items-center space-x-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-ethiopian-gold to-ethiopian-gold/80 rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-ethiopian-brown font-bold text-xl">A</span>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold">Adey International Market</h3>
-                  <p className="text-sm text-ethiopian-gold">Ethiopian Heritage</p>
-                </div>
+                <img
+                  src="/lovable-uploads/fdc59d66-e720-452b-b35a-367a6e35efcb.png"
+                  alt="Adey International Market Logo"
+                  className="h-16 w-auto object-contain"
+                />
               </div>
               <p className="text-gray-300 mb-3 text-lg">Your trusted partner for authentic Ethiopian imports.</p>
               <p className="text-gray-300 mb-8 text-lg">Supplying quality you can trust, service you can count on.</p>

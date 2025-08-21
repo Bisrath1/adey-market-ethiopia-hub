@@ -104,7 +104,7 @@ useEffect(() => {
         if (roleData?.role === 'admin') {
           navigate("/admin-dashboard");
         } else {
-          navigate("/register");
+          navigate("/");
         }
       }
 
