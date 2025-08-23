@@ -53,7 +53,7 @@ export const Navbar = () => {
               />
             </Link>
 
-            {/* Desktop Search - only for non-admin users */}
+            {/* Desktop Search - visible for all users except admin */}
             {!isAdmin && (
               <div className="hidden md:flex flex-1 max-w-md mx-8">
                 <form onSubmit={handleSearch} className="relative w-full">
@@ -139,7 +139,7 @@ export const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile Search - only for non-admin users */}
+          {/* Mobile Search - visible for all users except admin */}
           {!isAdmin && (
             <div className="md:hidden pb-3">
               <form onSubmit={handleSearch} className="relative">

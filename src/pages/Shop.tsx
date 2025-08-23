@@ -15,15 +15,27 @@ export const Shop: React.FC = () => {
   const { products, loading, error } = useProducts();
 
   const categoryParam = searchParams.get('category');
+  const searchParam = searchParams.get('search');
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
 
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = products;
 
+    // Filter by search query if present
+    if (searchParam) {
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(searchParam.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchParam.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchParam.toLowerCase())
+      );
+    }
+
+    // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(product => product.category === selectedCategory);
     }
 
+    // Sort products
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
@@ -37,7 +49,7 @@ export const Shop: React.FC = () => {
     });
 
     return filtered;
-  }, [products, selectedCategory, sortBy]);
+  }, [products, selectedCategory, sortBy, searchParam]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -54,11 +66,13 @@ export const Shop: React.FC = () => {
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <h1 className="text-3xl md:text-4xl font-bold text-ethiopian-brown mb-4">
-            Shop Ethiopian Heritage
+            {searchParam ? `Search Results for "${searchParam}"` : 'Shop Ethiopian Heritage'}
           </h1>
           <p className="text-gray-700 max-w-2xl">
-            Discover authentic Ethiopian products carefully sourced from artisans and farmers 
-            across Ethiopia. Each item carries the rich heritage of our culture.
+            {searchParam 
+              ? `Found ${filteredAndSortedProducts.length} products matching your search.`
+              : 'Discover authentic Ethiopian products carefully sourced from artisans and farmers across Ethiopia. Each item carries the rich heritage of our culture.'
+            }
           </p>
         </div>
       </div>
@@ -183,13 +197,19 @@ export const Shop: React.FC = () => {
                   No products found
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Try adjusting your filters or browse all categories.
+                  {searchParam 
+                    ? 'No products match your search. Try different keywords or browse all categories.'
+                    : 'Try adjusting your filters or browse all categories.'
+                  }
                 </p>
                 <Button
-                  onClick={() => handleCategoryChange('all')}
+                  onClick={() => {
+                    setSearchParams({});
+                    setSelectedCategory('all');
+                  }}
                   className="bg-ethiopian-gold hover:bg-ethiopian-gold/90 text-ethiopian-brown"
                 >
-                  View All Products
+                  {searchParam ? 'Clear Search' : 'View All Products'}
                 </Button>
               </div>
             )}
