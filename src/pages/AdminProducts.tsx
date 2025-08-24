@@ -19,13 +19,15 @@ import { categories, Product } from '@/data/products';
 const AdminProducts: React.FC = () => {
   const { user } = useAuth();
   const { isAdmin, isLoading: roleLoading } = useUserRole();
-  const { products, addProduct, updateProduct, deleteProduct } = useProductStore();
+  const { products, addProduct, updateProduct, deleteProduct,fetchProducts} = useProductStore();
 
   const [showForm, setShowForm] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-
+useEffect(() => {
+  fetchProducts();
+}, [fetchProducts]);
   const [formData, setFormData] = useState<Omit<Product, 'id'>>({
     name: '',
     category: 'coffee',
@@ -88,7 +90,7 @@ const AdminProducts: React.FC = () => {
     setLoading(true);
 
     try {
-      addProduct(productPayload);
+     await addProduct(productPayload);
       toast({ title: 'Success', description: 'Product added successfully' });
       
       setFormData({
